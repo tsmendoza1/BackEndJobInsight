@@ -1,6 +1,7 @@
 package com.jobinsight.proyectoretojobinsight.Modell;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import reactor.util.annotation.NonNull;
@@ -26,10 +27,12 @@ public class FormacionAcademica {
     private LocalDate fechaGraduacion;
 
     // Relación con el Perfil (ya que cada formación pertenece a un perfil de usuario)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "perfil_id")
+    @JsonBackReference
     @Schema(description = "Perfil asociado a esta formación", example = "1")
-    private Perfil perfil;  // Relación con la clase Perfil
+    private Perfil perfil; //Relacion con la clase perfil
+
 
     public FormacionAcademica() {
 

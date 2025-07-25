@@ -1,6 +1,9 @@
 package com.jobinsight.proyectoretojobinsight.Controlller;
 
+import com.jobinsight.proyectoretojobinsight.Modell.Perfil;
 import com.jobinsight.proyectoretojobinsight.Modell.Usuario;
+import com.jobinsight.proyectoretojobinsight.Security.UsuarioDetailsAdapter;
+import com.jobinsight.proyectoretojobinsight.Service.PerfilService;
 import com.jobinsight.proyectoretojobinsight.Service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,10 +17,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Tag(name = "Usuario", description = "Operaciones Relacionadas con Usuarios")
-@CrossOrigin(origins = "http://localhost:8080")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -25,8 +34,17 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioServicio;
 
-    public UsuarioController(UsuarioService usuarioServicio) {
+    @Autowired
+    private PerfilService perfilServicio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UsuarioService usuarioService;
+
+    public UsuarioController(UsuarioService usuarioServicio, PerfilService perfilServicio) {
         this.usuarioServicio = usuarioServicio;
+        this.perfilServicio = perfilServicio;
     }
 
     @Operation(
@@ -37,17 +55,31 @@ public class UsuarioController {
             @ApiResponse(responseCode = "200", description = "Usuario creado exitosamente"),
             @ApiResponse(responseCode = "500", description = "Solicitud incorrecta, error en los datos enviados")
     })
-    @PostMapping(
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario) {
-        try {
-            Usuario nuevoUsuario = usuarioServicio.crearUsuario(usuario);
-            return ResponseEntity.ok(nuevoUsuario);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+    @PostMapping
+    public Usuario crearUsuario(@RequestBody Usuario nuevoUsuario) {
+        if (nuevoUsuario.getPassword() == null || nuevoUsuario.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("La contraseña no puede ser nula ni vacía.");
         }
+
+        nuevoUsuario.setFechaCreacion(LocalDate.now());
+        nuevoUsuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
+
+        Usuario usuarioGuardado = usuarioServicio.crearUsuario(nuevoUsuario);
+
+        // Crear perfil asociado y asignar relación bidireccional
+        Perfil perfil = new Perfil();
+        perfil.setUsuario(usuarioGuardado);
+        perfil.setHabilidades(List.of());
+        perfil.setDescripcion("");
+        perfil.setExperienciaLaboral(List.of());
+        perfil.setFormacionAcademica(List.of());
+
+        Perfil perfilGuardado = perfilServicio.crearPerfil(perfil);
+
+        // Asignar el perfil creado al usuario y actualizar
+        usuarioGuardado.setPerfil(perfilGuardado);
+
+        return usuarioGuardado;
     }
 
     @Operation(
@@ -123,4 +155,17 @@ public class UsuarioController {
                     .body("Error eliminando el usuario: " + e.getMessage());
         }
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<Usuario> getUsuarioActual() {
+        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UsuarioDetailsAdapter usuarioDetails) {
+            Usuario usuario = usuarioServicio.obtenerUsuarioId((int) usuarioDetails.getId());
+            return ResponseEntity.ok(usuario);
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
 }

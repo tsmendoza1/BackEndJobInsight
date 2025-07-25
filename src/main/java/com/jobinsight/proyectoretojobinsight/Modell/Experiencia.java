@@ -1,6 +1,7 @@
 package com.jobinsight.proyectoretojobinsight.Modell;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 
@@ -31,8 +32,9 @@ public class Experiencia {
     private String descripcion;  // Descripción de las responsabilidades
 
     // Relación con el Perfil (porque cada experiencia pertenece a un perfil de usuario)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "perfil_id")
+    @JsonBackReference
     @Schema(description = "Perfil asociado a esta experiencia laboral")
     private Perfil perfil;  // Relación con la clase Perfil
 

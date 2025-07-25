@@ -1,9 +1,12 @@
 package com.jobinsight.proyectoretojobinsight.Modell;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import reactor.util.annotation.NonNull;
+// import reactor.util.annotation.NonNull;
+import org.springframework.lang.NonNull;
+
 
 import java.time.LocalDate;
 
@@ -13,6 +16,7 @@ import java.time.LocalDate;
  */
 @Schema(description = "Entidad que representa a un usuario de la plataforma JobInsight")
 @Entity
+@JsonIgnoreProperties({"perfil"})
 public class Usuario {
 
     @Schema(description = "Identificador único del usuario", example = "1")
@@ -34,7 +38,7 @@ public class Usuario {
 
     @Schema(description = "Contraseña del usuario (cifrada)", example = "********")
     @NonNull
-    private String contraseña;
+    private String password;
 
     @Schema(description = "Número de teléfono del usuario", example = "0987654321")
     private String telefono;
@@ -42,27 +46,29 @@ public class Usuario {
     @Schema(description = "Fecha de creación de la cuenta", example = "2025-06-25")
     private LocalDate fechaCreacion;
 
-    @Schema(description = "Tipo de usuario (Candidato o Empleador)", example = "Candidatos")
+    @Schema(description = "Tipo de usuario (CANDIDATO o EMPLEADOR)", example = "CANDIDATO")
     @Enumerated(EnumType.STRING)
-    private TipoUsuario tipo; // Enum: Candidato o Empleador
+    private TipoUsuario tipo; // Enum: CANDIDATO, EMPLEADOR. ADMINISTRADOR
 
     @Schema(description = "Dirección del usuario", example = "Quito, Ecuador")
     private String direccion;
 
-    // El perfil se asocia al usuario, pero el perfil no tiene el campo `usuario_id`
-    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    // El perfil se asocia al usuario, pero el perfil tiene el campo `usuario_id`
+    @OneToOne(mappedBy = "usuario")
     @JsonBackReference
     private Perfil perfil;
+
+
 
     public Usuario() {
     }
 
     // Constructor para nuevos usuarios sin ID (para crear nuevos registros)
-    public Usuario(@NonNull String nombre, @NonNull String apellido, @NonNull String email, @NonNull String contraseña, String telefono, LocalDate fechaCreacion, TipoUsuario tipo, String direccion) {
+    public Usuario(@NonNull String nombre, @NonNull String apellido, @NonNull String email, @NonNull String password, String telefono, LocalDate fechaCreacion, TipoUsuario tipo, String direccion) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
-        this.contraseña = contraseña;
+        this.password = password;
         this.telefono = telefono;
         this.fechaCreacion = fechaCreacion;
         this.tipo = tipo;
@@ -70,12 +76,12 @@ public class Usuario {
     }
 
     // Constructor con ID (para actualizar o recuperar registros existentes)
-    public Usuario(Long id, @NonNull String nombre, @NonNull String apellido, @NonNull String email, @NonNull String contraseña, String telefono, LocalDate fechaCreacion, TipoUsuario tipo, String direccion) {
+    public Usuario(Long id, @NonNull String nombre, @NonNull String apellido, @NonNull String email, @NonNull String password, String telefono, LocalDate fechaCreacion, TipoUsuario tipo, String direccion) {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
-        this.contraseña = contraseña;
+        this.password = password;
         this.telefono = telefono;
         this.fechaCreacion = fechaCreacion;
         this.tipo = tipo;
@@ -116,12 +122,12 @@ public class Usuario {
     }
 
     @NonNull
-    public String getContraseña() {
-        return contraseña;
+    public String getPassword() {
+        return password;
     }
 
-    public void setContraseña(@NonNull String contraseña) {
-        this.contraseña = contraseña;
+    public void setPassword(@NonNull String contraseña) {
+        this.password = contraseña;
     }
 
     public String getTelefono() {

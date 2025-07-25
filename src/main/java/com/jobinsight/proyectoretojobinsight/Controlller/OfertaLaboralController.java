@@ -12,11 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 /**
  * Controlador para gestionar las operaciones relacionadas con las ofertas laborales.
  */
 @Tag(name = "Oferta Laboral", description = "Operaciones relacionadas con ofertas laborales")
-@CrossOrigin(origins = "http://localhost:8080")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/ofertas")
 public class OfertaLaboralController {
@@ -28,6 +31,25 @@ public class OfertaLaboralController {
     public OfertaLaboralController(OfertaLaboralService ofertaLaboralServicio) {
         this.ofertaLaboralServicio = ofertaLaboralServicio;
     }
+
+    @Operation(
+            summary = "Obtiene todas las ofertas laborales",
+            description = "Devuelve una lista con todas las ofertas laborales registradas en la base de datos"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de ofertas laborales devuelta exitosamente"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping
+    public ResponseEntity<List<OfertaLaboral>> obtenerTodasLasOfertas() {
+        try {
+            List<OfertaLaboral> ofertas = ofertaLaboralServicio.obtenerTodasLasOfertas();
+            return ResponseEntity.ok(ofertas);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
 
     @Operation(
             summary = "Permite crear una oferta laboral",

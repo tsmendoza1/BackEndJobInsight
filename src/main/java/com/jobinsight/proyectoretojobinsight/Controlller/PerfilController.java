@@ -1,5 +1,6 @@
 package com.jobinsight.proyectoretojobinsight.Controlller;
 
+import com.jobinsight.proyectoretojobinsight.DataTransferObject.PerfilDTO;
 import com.jobinsight.proyectoretojobinsight.Modell.Perfil;
 import com.jobinsight.proyectoretojobinsight.Service.PerfilService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,17 +18,41 @@ import org.springframework.web.bind.annotation.*;
  * Controlador para gestionar las operaciones relacionadas con los perfiles de los usuarios.
  */
 @Tag(name = "Perfil", description = "Operaciones Relacionadas con Perfiles")
-@CrossOrigin(origins = "http://localhost:8080")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/perfiles")
 public class PerfilController {
     @Autowired
     private PerfilService perfilServicio;
 
-    // Constructor
     public PerfilController(PerfilService perfilServicio) {
         this.perfilServicio = perfilServicio;
     }
+
+    @Operation(
+            summary = "Obtener perfil del usuario autenticado",
+            description = "Devuelve los datos del perfil según el token JWT del usuario autenticado."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil encontrado"),
+            @ApiResponse(responseCode = "404", description = "Perfil no encontrado"),
+            @ApiResponse(responseCode = "500", description = "Error interno")
+    })
+    @GetMapping("/mi-perfil")
+    public ResponseEntity<?> obtenerMiPerfil(@RequestHeader("Authorization") String token) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String correoUsuario = perfilServicio.extraerCorreoDesdeJWT(jwt); // Necesitas implementarlo
+            Perfil perfil = perfilServicio.obtenerPerfilPorCorreoUsuario(correoUsuario); // También
+            PerfilDTO dto = perfilServicio.convertirAPerfilDTO(perfil);
+            return ResponseEntity.ok(dto);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Perfil no encontrado");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
 
     @Operation(
             summary = "Permite crear un perfil con un ID único",
@@ -37,7 +62,7 @@ public class PerfilController {
             @ApiResponse(responseCode = "200", description = "Perfil creado exitosamente"),
             @ApiResponse(responseCode = "500", description = "Solicitud incorrecta, error en los datos enviados")
     })
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<Perfil> crearPerfil(@RequestBody Perfil nuevoPerfil) {
         Perfil perfilCreado = perfilServicio.crearPerfil(nuevoPerfil);
         return new ResponseEntity<>(perfilCreado, HttpStatus.CREATED);
@@ -52,16 +77,19 @@ public class PerfilController {
             @ApiResponse(responseCode = "404", description = "Perfil no encontrado con el ID proporcionado")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<Perfil> obtenerPerfilPorId(
+    public ResponseEntity<PerfilDTO> obtenerPerfilPorId(
             @Parameter(description = "ID del perfil que se obtendrá", required = true)
             @PathVariable Integer id) {
         try {
             Perfil perfil = perfilServicio.obtenerPerfilId(id);
-            return ResponseEntity.ok(perfil);
+            PerfilDTO perfilDTO = perfilServicio.convertirAPerfilDTO(perfil);
+            return ResponseEntity.ok(perfilDTO);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+
+
 
     @Operation(
             summary = "Permite actualizar un perfil por el ID",

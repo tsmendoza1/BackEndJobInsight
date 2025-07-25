@@ -15,6 +15,7 @@ import java.util.List;
 
 @Entity
 @Schema(description = "Entidad que representa el perfil de un usuario en la plataforma JobInsight")
+
 public class Perfil {
 
     @Id
@@ -23,29 +24,26 @@ public class Perfil {
     private Long id;
 
     @Schema(description = "Identificador único del usuario asociado al perfil", example = "1")
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id")  // Clave foránea
-    @JsonManagedReference
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     @ElementCollection
     @Schema(description = "Lista de habilidades del candidato")
-    @JsonManagedReference
-    private List<String> habilidades; // Lista de habilidades del candidato
+    private List<String> habilidades;
 
     @Schema(description = "Descripción adicional sobre el perfil del usuario")
     private String descripcion;
 
-    @Schema(description = "Lista de experiencias laborales del usuario", example = "[\"Desarrollador Backend\", \"Desarrollador Frontend\"]")
-    @OneToMany(mappedBy = "perfil")
+    @OneToMany(mappedBy = "perfil", cascade = CascadeType.ALL)
     @JsonManagedReference
+    @Schema(description = "Lista de experiencias laborales del usuario", example = "[\"Desarrollador Backend\", \"Desarrollador Frontend\"]")
     private List<Experiencia> experienciaLaboral;
 
     @Schema(description = "Lista de formaciones académicas del candidato")
     @OneToMany(mappedBy = "perfil")
     @JsonManagedReference
     private List<FormacionAcademica> formacionAcademica;
-
 
     public Perfil() {
 

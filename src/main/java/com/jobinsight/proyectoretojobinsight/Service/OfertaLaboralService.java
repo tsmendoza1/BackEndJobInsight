@@ -16,6 +16,10 @@ public class OfertaLaboralService {
         this.ofertaLaboralRepositorio = ofertaLaboralRepositorio;
     }
 
+    public List<OfertaLaboral> obtenerTodasLasOfertas() {
+        return ofertaLaboralRepositorio.findAll();
+    }
+
     // Obtener una oferta laboral por su ID
     public OfertaLaboral obtenerOfertaLaboralId(Integer id) {
         return ofertaLaboralRepositorio.findById(id)
@@ -55,4 +59,6 @@ public class OfertaLaboralService {
         }
         ofertaLaboralRepositorio.deleteById(id);
     }
+    
+
 }
